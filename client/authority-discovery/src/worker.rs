@@ -32,7 +32,7 @@ use addr_cache::AddrCache;
 use codec::Decode;
 use either::Either;
 use libp2p::{core::multiaddr, multihash::Multihash};
-use log::{debug, error, log_enabled};
+use log::{debug, info, error, log_enabled};
 use prometheus_endpoint::{Counter, CounterVec, Gauge, Opts, U64, register};
 use prost::Message;
 use rand::{seq::SliceRandom, thread_rng};
@@ -183,6 +183,7 @@ where
 		role: Role,
 		prometheus_registry: Option<prometheus_endpoint::Registry>,
 	) -> Self {
+		info!(target: LOG_TARGET, " Starting Authority Discovery worker");
 		// Kademlia's default time-to-live for Dht records is 36h, republishing records every 24h.
 		// Given that a node could restart at any point in time, one can not depend on the
 		// republishing process, thus publishing own external addresses should happen on an interval
