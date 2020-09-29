@@ -290,6 +290,7 @@ where
 
 		let addresses = self.addresses_to_publish();
 
+	
 		if let Some(metrics) = &self.metrics {
 			metrics.publish.inc();
 			metrics.amount_addresses_last_published.set(
@@ -314,6 +315,13 @@ where
 				serialized_addresses.as_slice(),
 			)
 			.map_err(|_| Error::Signing)?;
+
+
+		info!(
+			target: LOG_TARGET,
+			"serialized_addresses {:?}",
+			serialized_addresses.as_slice()
+		);
 
 		for (sign_result, key) in signatures.into_iter().zip(keys) {
 			let mut signed_addresses = vec![];
@@ -427,13 +435,13 @@ where
 						metrics.dht_event_received.with_label_values(&["value_found"]).inc();
 					}
 
-					if log_enabled!(log::Level::Debug) {
+				
 						let hashes = v.iter().map(|(hash, _value)| hash.clone());
-						debug!(
+						info!(
 							target: LOG_TARGET,
 							"Value for hash '{:?}' found on Dht.", hashes,
 						);
-					}
+					
 
 					if let Err(e) = self.handle_dht_value_found_event(v) {
 						if let Some(metrics) = &self.metrics {
@@ -468,7 +476,7 @@ where
 						metrics.dht_event_received.with_label_values(&["value_put"]).inc();
 					}
 
-					debug!(
+					info!(
 						target: LOG_TARGET,
 						"Successfully put hash '{:?}' on Dht.", hash,
 					)
@@ -478,7 +486,7 @@ where
 						metrics.dht_event_received.with_label_values(&["value_put_failed"]).inc();
 					}
 
-					debug!(
+					info!(
 						target: LOG_TARGET,
 						"Failed to put hash '{:?}' on Dht.", hash
 					)
@@ -566,6 +574,20 @@ where
 			.collect();
 
 		if !remote_addresses.is_empty() {
+			info!(
+				target: LOG_TARGET,
+				"remote_addresses is not empty. insert to cache:"
+			);
+			info!(
+				target: LOG_TARGET,
+				"authority_id : '{:?}'",
+				authority_id
+			);
+			info!(
+				target: LOG_TARGET,
+				"remote_addresses : '{:?}'",
+				remote_addresses
+			);
 			self.addr_cache.insert(authority_id, remote_addresses);
 			if let Some(metrics) = &self.metrics {
 				metrics.known_authorities_count.set(
