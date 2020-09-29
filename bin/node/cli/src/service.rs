@@ -19,7 +19,7 @@
 #![warn(unused_extern_crates)]
 
 //! Service implementation. Specialized wrapper over substrate service.
-
+use log::{info};
 use std::sync::Arc;
 use sc_consensus_babe;
 use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
@@ -43,6 +43,8 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 type FullGrandpaBlockImport =
 	grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>;
 type LightClient = sc_service::TLightClient<Block, RuntimeApi, Executor>;
+
+const LOG_TARGET: &'static str = "sub-authority-discovery";
 
 pub fn new_partial(config: &Configuration) -> Result<sc_service::PartialComponents<
 	FullClient, FullBackend, FullSelectChain,
@@ -255,6 +257,8 @@ pub fn new_full_base(
 		task_manager.spawn_essential_handle().spawn_blocking("babe-proposer", babe);
 	}
 
+	info!(target: LOG_TARGET, "Spawn authority discovery module check");
+
 	// Spawn authority discovery module.
 	if matches!(role, Role::Authority{..} | Role::Sentry {..}) {
 		let (sentries, authority_discovery_role) = match role {
@@ -284,6 +288,8 @@ pub fn new_full_base(
 			authority_discovery_role,
 			prometheus_registry.clone(),
 		);
+
+		info!(target: LOG_TARGET, " Launching Authority Discovery worker");
 
 		task_manager.spawn_handle().spawn("authority-discovery-worker", authority_discovery_worker);
 	}
