@@ -249,6 +249,12 @@ where
 	}
 
 	fn addresses_to_publish(&self) -> impl ExactSizeIterator<Item = Multiaddr> {
+
+		info!(
+			target: LOG_TARGET,
+			"addresses_to_publish call"
+		);
+
 		match &self.sentry_nodes {
 			Some(addrs) => Either::Left(addrs.clone().into_iter()),
 			None => {
@@ -270,6 +276,10 @@ where
 
 	/// Publish either our own or if specified the public addresses of our sentry nodes.
 	fn publish_ext_addresses(&mut self) -> Result<()> {
+		info!(
+			target: LOG_TARGET,
+			"publish_ext_addresses call"
+		);
 		let key_store = match &self.role {
 			Role::Authority(key_store) => key_store,
 			// Only authority nodes can put addresses (their own or the ones of their sentry nodes)
@@ -334,6 +344,10 @@ where
 	}
 
 	fn refill_pending_lookups_queue(&mut self) -> Result<()> {
+		info!(
+			target: LOG_TARGET,
+			"refill_pending_lookups_queue call"
+		);
 		let id = BlockId::hash(self.client.info().best_hash);
 
 		let local_keys = match &self.role {
@@ -373,6 +387,10 @@ where
 	}
 
 	fn start_new_lookups(&mut self) {
+		info!(
+			target: LOG_TARGET,
+			"start_new_lookups call"
+		);
 		while self.in_flight_lookups.len() < MAX_IN_FLIGHT_LOOKUPS {
 			let authority_id = match self.pending_lookups.pop() {
 				Some(authority) => authority,
@@ -398,6 +416,10 @@ where
 	///   - Poll::Pending when there are no more events to handle or
 	///   - Poll::Ready(()) when the dht event stream terminated.
 	fn handle_dht_events(&mut self, cx: &mut Context) -> Poll<()>{
+		info!(
+			target: LOG_TARGET,
+			"handle_dht_events call"
+		);
 		loop {
 			match ready!(self.dht_event_rx.poll_next_unpin(cx)) {
 				Some(DhtEvent::ValueFound(v)) => {
@@ -473,6 +495,10 @@ where
 		&mut self,
 		values: Vec<(libp2p::kad::record::Key, Vec<u8>)>,
 	) -> Result<()> {
+		info!(
+			target: LOG_TARGET,
+			"handle_dht_value_found_event call"
+		);
 		// Ensure `values` is not empty and all its keys equal.
 		let remote_key = values.iter().fold(Ok(None), |acc, (key, _)| {
 			match acc {
@@ -561,6 +587,10 @@ where
 		key_store: &BareCryptoStorePtr,
 		client: &Client,
 	) -> Result<HashSet<AuthorityId>> {
+		info!(
+			target: LOG_TARGET,
+			"get_own_public_keys_within_authority_set call"
+		);
 		let local_pub_keys = key_store.read()
 			.sr25519_public_keys(key_types::AUTHORITY_DISCOVERY)
 			.into_iter()
@@ -838,6 +868,10 @@ where
 	<Client as ProvideRuntimeApi<Block>>::Api: AuthorityDiscoveryApi<Block>,
 {
 	pub(crate) fn inject_addresses(&mut self, authority: AuthorityId, addresses: Vec<Multiaddr>) {
+		info!(
+			target: LOG_TARGET,
+			"inject_addresses call"
+		);
 		self.addr_cache.insert(authority, addresses);
 	}
 }
