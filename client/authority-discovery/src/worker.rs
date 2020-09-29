@@ -407,6 +407,17 @@ where
 			let hash = hash_authority_id(authority_id.as_ref());
 			self.network
 				.get_value(&hash);
+
+			info!(
+				target: LOG_TARGET,
+				"in_flight_lookups  insert authority_id : '{:?}'",
+				authority_id
+			);
+			info!(
+				target: LOG_TARGET,
+				"in_flight_lookups  insert hash : '{:?}'",
+				hash
+			);
 			self.in_flight_lookups.insert(hash, authority_id);
 
 			if let Some(metrics) = &self.metrics {
@@ -431,6 +442,10 @@ where
 		loop {
 			match ready!(self.dht_event_rx.poll_next_unpin(cx)) {
 				Some(DhtEvent::ValueFound(v)) => {
+					info!(
+						target: LOG_TARGET,
+						"DhtEvent ValueFound"
+					);
 					if let Some(metrics) = &self.metrics {
 						metrics.dht_event_received.with_label_values(&["value_found"]).inc();
 					}
@@ -455,6 +470,10 @@ where
 					}
 				}
 				Some(DhtEvent::ValueNotFound(hash)) => {
+					info!(
+						target: LOG_TARGET,
+						"DhtEvent ValueNotFound"
+					);
 					if let Some(metrics) = &self.metrics {
 						metrics.dht_event_received.with_label_values(&["value_not_found"]).inc();
 					}
@@ -472,6 +491,10 @@ where
 					}
 				},
 				Some(DhtEvent::ValuePut(hash)) => {
+					info!(
+						target: LOG_TARGET,
+						"DhtEvent ValuePut"
+					);
 					if let Some(metrics) = &self.metrics {
 						metrics.dht_event_received.with_label_values(&["value_put"]).inc();
 					}
@@ -482,6 +505,10 @@ where
 					)
 				},
 				Some(DhtEvent::ValuePutFailed(hash)) => {
+					info!(
+						target: LOG_TARGET,
+						"DhtEvent ValuePutFailed"
+					);
 					if let Some(metrics) = &self.metrics {
 						metrics.dht_event_received.with_label_values(&["value_put_failed"]).inc();
 					}
@@ -492,6 +519,10 @@ where
 					)
 				},
 				None => {
+					info!(
+						target: LOG_TARGET,
+						"Dht event stream terminated."
+					);
 					debug!(target: LOG_TARGET, "Dht event stream terminated.");
 					return Poll::Ready(());
 				},
@@ -519,11 +550,29 @@ where
 			}
 		})?.ok_or(Error::ReceivingDhtValueFoundEventWithNoRecords)?;
 
+		info!(
+			target: LOG_TARGET,
+			"remote_key : '{:?}'",
+			remote_key
+		);
+
 		let authority_id: AuthorityId = self.in_flight_lookups
 			.remove(&remote_key)
 			.ok_or(Error::ReceivingUnexpectedRecord)?;
 
+		info!(
+			target: LOG_TARGET,
+			"authority_id : '{:?}'",
+			authority_id
+		);
+
 		let local_peer_id = self.network.local_peer_id();
+
+		info!(
+			target: LOG_TARGET,
+			"local_peer_id : '{:?}'",
+			local_peer_id
+		);
 
 		let remote_addresses: Vec<Multiaddr> = values.into_iter()
 			.map(|(_k, v)| {
@@ -577,11 +626,6 @@ where
 			info!(
 				target: LOG_TARGET,
 				"remote_addresses is not empty. insert to cache:"
-			);
-			info!(
-				target: LOG_TARGET,
-				"authority_id : '{:?}'",
-				authority_id
 			);
 			info!(
 				target: LOG_TARGET,
