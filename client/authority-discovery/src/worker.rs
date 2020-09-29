@@ -318,6 +318,11 @@ where
 			.encode(&mut signed_addresses)
 				.map_err(Error::EncodingProto)?;
 
+			debug!(
+				target: LOG_TARGET,
+				"serialized_addresses is'{:?}'", serialized_addresses.as_slice()
+			);
+
 			self.network.put_value(
 				hash_authority_id(key.1.as_ref()),
 				signed_addresses,
